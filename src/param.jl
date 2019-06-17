@@ -1,7 +1,6 @@
 mutable struct Param
     ρ       ::Float64
     σ       ::Float64
-    blow    ::Float64
     Δ       ::Float64
     χ0      ::Float64
     χ1      ::Float64
@@ -46,8 +45,8 @@ mutable struct Param
         end
 
         # NOTE: equidistant grid points
-        this.gA = range(0.0, stop = 70, length = j["nJ"]["value"])
-        this.gB = range(this.blow, stop = 40, length = j["nI"]["value"])
+        this.gA = range(0.0, stop = j["amax"]["value"], length = this.nJ)
+        this.gB = range(j["bmin"]["value"], stop = j["bmax"]["value"], length = this.nI)
         # discretize the wage process with rowenhorst
         # ω       = - j["σ2"]["value"] * (1 - j["ρ_z"]["value"]) / (2 * (1 - j["ρ_z"]["value"]^2))
         # prod    = Markov.rowenhorst(ω, j["ρ_z"]["value"], j["σ2"]["value"], j["nK"]["value"])

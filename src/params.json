@@ -9,8 +9,18 @@
 		"description" : "Intertemporal elasticity of substitution",
 		"symbol" : "\\gamma"
 	},
-  "blow" : {
+  "bmin" : {
 		"value" : -2.0,
+		"description" : "Lower bound on liquid asset",
+		"symbol" : "\\bar{b}"
+	},
+  "bmax" : {
+		"value" : 40.0,
+		"description" : "Lower bound on liquid asset",
+		"symbol" : "\\bar{b}"
+	},
+  "amax" : {
+		"value" : 70.0,
 		"description" : "Lower bound on liquid asset",
 		"symbol" : "\\bar{b}"
 	},
@@ -60,7 +70,7 @@
 		"symbol" : "w"
 	},
   "nI" : {
-		"value" : 80,
+		"value" : 100,
 		"description" : "Grid size, liquid asset",
 		"symbol" : "I"
 	},
