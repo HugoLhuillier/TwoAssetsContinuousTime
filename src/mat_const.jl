@@ -1,4 +1,4 @@
-function B!(p, hh, k::Int)
+function B!(p::Param, hh::Household, k::Integer)
     hh.X[:,:,k]     = - (min.(0, hh.scB[:,:,k]) .+ min.(0, hh.sdB[:,:,k])) ./ p.db
     hh.Y[:,:,k]     = (min.(hh.scB[:,:,k], 0.0) .+ min.(hh.sdB[:,:,k], 0.0)) ./ p.db .-
         (max.(hh.scF[:,:,k], 0.0) .+ max.(hh.sdF[:,:,k], 0.0)) ./ p.db
@@ -20,8 +20,7 @@ function B!(p, hh, k::Int)
     return nothing
 end
 
-function D!(p, hh, k::Int)
-    # NOTE: last column is different from theirs
+function D!(p::Param, hh::Household, k::Integer)
     hh.X[:,:,k]     = - min.(hh.d[:,:,k], 0) ./ p.da
     hh.Y[:,:,k]     = (min.(hh.d[:,:,k], 0) .- max.(hh.d[:,:,k], 0) .-
                     (ra(p, p.gA) .* p.gA)' .- p.gZ[k] * p.w * p.ξ) ./ p.da
@@ -39,12 +38,12 @@ function D!(p, hh, k::Int)
     return nothing
 end
 
-function A!(p,hh)
-    hh.A[:] = hh.B .+ hh.D .+ hh.Λ
+function A!(p::Param, hh::Household)
+    hh.A = hh.B + hh.D + hh.Λ
     return nothing
 end
 
-function solve!(p,hh)
+function solve!(p::Param, hh::Household)
     hh.Vupdtvec[:]  = vcat(hh.V...)
     idrs!(hh.Vupdtvec, (1 / p.Δ + p.ρ) .* spdiagm(0 => ones(p.nI*p.nJ*p.nK)) - hh.A, vcat(u(p, hh.c) .+ hh.V./ p.Δ...))
     hh.Vupdt[:]     = reshape(hh.Vupdtvec, p.nI, p.nJ, p.nK)

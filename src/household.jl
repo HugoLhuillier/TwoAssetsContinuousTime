@@ -5,8 +5,8 @@ mutable struct Household
     Vupdtvec::Array{Float64}
     c       ::Union{SharedArray{Float64}, Array{Float64}}
     d       ::Union{SharedArray{Float64}, Array{Float64}}
-    adot    ::Union{SharedArray{Float64}, Array{Float64}}
-    bdot    ::Union{SharedArray{Float64}, Array{Float64}}
+    adot    ::Array{Float64}
+    bdot    ::Array{Float64}
 
     VaB     ::Union{SharedArray{Float64}, Array{Float64}}
     VaF     ::Union{SharedArray{Float64}, Array{Float64}}
@@ -53,8 +53,9 @@ mutable struct Household
             end
         end
         # TODO: so far valid only for 2 state income process
-        this.Λ[:] = sparse([Diagonal(-p.λ[1,2] * ones(p.nI * p.nJ)) Diagonal(p.λ[1,2] * ones(p.nI * p.nJ));
-                     Diagonal(p.λ[2,1] * ones(p.nI * p.nJ)) Diagonal(-p.λ[2,1] * ones(p.nI * p.nJ))])
+        this.Λ = spdiagm(0           => [-p.λ[1,2] * ones(p.nI * p.nJ); -p.λ[2,1] * ones(p.nI * p.nJ)],
+                            -p.nI*p.nJ  => p.λ[2,1] * ones(p.nI * p.nJ),
+                            p.nI*p.nJ   => p.λ[1,2] * ones(p.nI * p.nJ))
 
         for (k,z) in enumerate(p.gZ)
             this.V[:,:,k] = u(p, (1 - p.ξ) * z * p.w .+ (p.ra * p.gA)' .+ (p.rb + p.κ).* p.gB) ./ p.ρ
@@ -64,6 +65,6 @@ mutable struct Household
     end
 end
 
-u(p, c)     = c.^(1 - p.σ) ./ (1 - p.σ)
-∂u(p, c)    = c.^(-p.σ)
-inv_∂u(p, x) = (x).^(-1 / p.σ)
+u(p::Param, c)     = c.^(1 - p.σ) ./ (1 - p.σ)
+∂u(p::Param, c)    = c.^(-p.σ)
+inv_∂u(p::Param, x) = (x).^(-1 / p.σ)

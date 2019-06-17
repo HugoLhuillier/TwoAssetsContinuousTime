@@ -1,6 +1,5 @@
 module TwoAssetsContinuousTime
 
-    using ProgressMeter
     using JSON
     using SparseArrays, LinearAlgebra, IterativeSolvers, SharedArrays
     # include(joinpath(dirname(@__FILE__),"Markov/src/AR1.jl"))
@@ -11,10 +10,7 @@ module TwoAssetsContinuousTime
     include("foc.jl")
     include("mat_const.jl")
 
-    # NOTE: working but slow...
-
-    function hjb!(p,hh,maxIter)
-        # prog = ProgressThresh(p.ε, "residual:")
+    function hjb!(p::Param, hh::Household, maxIter)
         for i in 1:maxIter
             for k in eachindex(p.gZ)
                 ∂V!(p,hh,k)
@@ -26,7 +22,6 @@ module TwoAssetsContinuousTime
             A!(p,hh)
             # transition matrix should sum up to zero
             s       = maximum(abs.(sum(hh.A, dims = 2)))
-            # hh.A[4081,:]
             if s > p.ε; @warn "improper transition matrix, ∑ = $s"; end
             solve!(p,hh)
             e       = maximum(hh.V .- hh.Vupdt)
@@ -39,16 +34,15 @@ module TwoAssetsContinuousTime
                 warn("convergence failed w/ residuals $e")
                 break
             else
-                # ProgressMeter.update!(prog, e)
                 @info "iteration $i w/ residual = $e"
             end
         end
         return nothing
     end
 
-    function hjb(; maxIter::Int = 30)
-        p   = Param();
-        hh  = Household(p);
+    function hjb(; maxIter::Integer = 30)
+        p   = Param()
+        hh  = Household(p)
         hjb!(p,hh,maxIter)
         return p,hh
     end
