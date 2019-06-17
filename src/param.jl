@@ -27,8 +27,8 @@ mutable struct Param
 
 
     function Param(; par = Dict())
-        # f = open(joinpath(dirname(@__FILE__),"params.json"))
-        f = open("./params.json")
+        f = open(joinpath(dirname(@__FILE__),"params.json"))
+        # f = open("./params.json")
         j = JSON.parse(f)
         close(f)
 
