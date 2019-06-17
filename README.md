@@ -19,6 +19,8 @@ to change the calibration, modify the ``src/params.json`` file.
 
 the stationary distribution over illiquid and liquid wealth for the high income households looks like
 
-![](./figs/μ_2.png)
+<p align = "center">
+  <img src="./figs/μ_2.png">
+</p>
 
 the remaining figures can be found in the ``fig/`` folder.
