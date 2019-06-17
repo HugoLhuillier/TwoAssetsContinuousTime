@@ -31,7 +31,7 @@ module TwoAssetsContinuousTime
                 loms!(p,hh)
                 break
             elseif i == maxIter
-                warn("convergence failed w/ residuals $e")
+                @warn "convergence failed w/ residuals $e"
                 break
             else
                 @info "iteration $i w/ residual = $e"
