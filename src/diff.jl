@@ -5,6 +5,12 @@ end
 function upwind!(O, cB::T, cF::T, k::Integer) where T <: Array{Float64}
     upwind!(O, cB, cF, cB, cF, k)
 end
+function upwind_mat!(hh::Household, dot::Array{Float64}, d::Float64, k::Integer)
+    hh.X[:,:,k] = -min.(dot, 0) ./ d
+    hh.Y[:,:,k] = (min.(dot, 0) .- max.(dot, 0)) ./ d
+    hh.Z[:,:,k] = max.(dot, 0) ./ d
+    return nothing
+end
 
 function ∂V!(p::Param, hh::Household, k::Integer)
     # NOTE: boundary condition

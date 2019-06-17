@@ -7,6 +7,7 @@ mutable struct Household
     d       ::Union{SharedArray{Float64}, Array{Float64}}
     adot    ::Array{Float64}
     bdot    ::Array{Float64}
+    μ       ::Array{Float64}
 
     VaB     ::Union{SharedArray{Float64}, Array{Float64}}
     VaF     ::Union{SharedArray{Float64}, Array{Float64}}

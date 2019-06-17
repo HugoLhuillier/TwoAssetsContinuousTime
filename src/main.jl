@@ -1,7 +1,7 @@
 module TwoAssetsContinuousTime
 
     using JSON
-    using SparseArrays, LinearAlgebra, IterativeSolvers, SharedArrays
+    using SparseArrays, LinearAlgebra, IterativeSolvers, SharedArrays, Arpack
     # include(joinpath(dirname(@__FILE__),"Markov/src/AR1.jl"))
     include("param.jl")
     include("household.jl")
@@ -23,7 +23,7 @@ module TwoAssetsContinuousTime
             # transition matrix should sum up to zero
             s       = maximum(abs.(sum(hh.A, dims = 2)))
             if s > p.ε; @warn "improper transition matrix, ∑ = $s"; end
-            solve!(p,hh)
+            solve_hjb!(p,hh)
             e       = maximum(hh.V .- hh.Vupdt)
             hh.V[:] = hh.Vupdt[:]
             if abs(e) <= p.ε
@@ -37,6 +37,21 @@ module TwoAssetsContinuousTime
                 @info "iteration $i w/ residual = $e"
             end
         end
+        return nothing
+    end
+
+    function kde!(p::Param, hh::Household)
+        for k in eachindex(p.gZ)
+            B2!(p,hh,k)
+            D2!(p,hh,k)
+        end
+        TwoAssetsContinuousTime.A!(p,hh)
+        # NOTE: compared to ben's code, take the eigenvector associated to
+        # the largest eigenvalue (= zero)
+        val, vec = Arpack.eigs(hh.A', which = :LR, nev = 1)
+        vec     = Real.(vec)
+        vec     ./= sum(vec)
+        hh.μ    = reshape(vec, (p.nI, p.nJ, p.nK))
         return nothing
     end
 

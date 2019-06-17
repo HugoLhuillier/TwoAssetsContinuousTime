@@ -10,13 +10,25 @@ function B!(p::Param, hh::Household, k::Integer)
     hh.X[end,:,k]   = - (min.(0, hh.scB) .+ hh.sdB)[end,:,k] ./ p.db
     hh.Y[end,:,k]   = (min.(hh.scB, 0.0) .- max.(hh.scF, 0.0) .+ hh.sdB)[end,:,k] ./ p.db
     hh.Z[end,:,k]   = max.(hh.scF[end,:,k], 0.0)  ./ p.db
-    # put the diagonals together in a tridiagonal matrix. do not need X[1,:,:] and Z[end,:,:]
+    # put the diagonals together in a tridiagonal matrix
+    concB!(p,hh,k)
+    return nothing
+end
+
+function B2!(p::Param, hh::Household, k::Integer)
+    upwind_mat!(hh, hh.bdot[:,:,k], p.db, k)
+    concB!(p,hh,k)
+end
+
+function concB!(p::Param, hh::Household, k::Integer)
+    # do not need X[1,:,:] and Z[end,:,:]
     hh.X[:,:,k]     = [hh.X[2:end,:,k]; zeros(p.nJ)']
     hh.Z[:,:,k]     = [zeros(p.nJ)'; hh.Z[1:(end-1),:,k]]
     hh.B[(p.nI*p.nJ*(k-1)+1):(p.nI*p.nJ*k),(p.nI*p.nJ*(k-1)+1):(p.nI*p.nJ*k)] =
                         spdiagm(-1  => vcat(hh.X[:,:,k]...)[1:(end-1)],
                                 0   => vcat(hh.Y[:,:,k]...),
                                 1   => vcat(hh.Z[:,:,k]...)[2:end])
+    dropzeros!(hh.B)
     return nothing
 end
 
@@ -31,10 +43,22 @@ function D!(p::Param, hh::Household, k::Integer)
     hh.Y[:,end,k]   = (min.(hh.d[:,end,k],0) .+ ra(p, p.gA[end]) .* p.gA[end] .+ p.gZ[k] * p.w * p.ξ) ./ p.da
     hh.X[:,end,k]   = -(min.(hh.d[:,end,k],0) .+ ra(p, p.gA[end]) .* p.gA[end] .+ p.gZ[k] * p.w * p.ξ) ./ p.da
     # cast together in sparse matrix
+    concD!(p,hh,k)
+    return nothing
+end
+
+function D2!(p::Param, hh::Household, k::Integer)
+    upwind_mat!(hh, hh.adot[:,:,k], p.da, k)
+    concD!(p, hh, k)
+    return nothing
+end
+
+function concD!(p::Param, hh::Household, k::Integer)
     hh.D[(p.nI*p.nJ*(k-1)+1):(p.nI*p.nJ*k),(p.nI*p.nJ*(k-1)+1):(p.nI*p.nJ*k)] =
                         spdiagm(p.nI    => vcat(hh.Z[:,1:(end-1),k]...),
                                 0       => vcat(hh.Y[:,:,k]...),
                                 -p.nI   => vcat(hh.X[:,2:end,k]...))
+    dropzeros!(hh.D)
     return nothing
 end
 
@@ -43,7 +67,7 @@ function A!(p::Param, hh::Household)
     return nothing
 end
 
-function solve!(p::Param, hh::Household)
+function solve_hjb!(p::Param, hh::Household)
     hh.Vupdtvec[:]  = vcat(hh.V...)
     idrs!(hh.Vupdtvec, (1 / p.Δ + p.ρ) .* spdiagm(0 => ones(p.nI*p.nJ*p.nK)) - hh.A, vcat(u(p, hh.c) .+ hh.V./ p.Δ...))
     hh.Vupdt[:]     = reshape(hh.Vupdtvec, p.nI, p.nJ, p.nK)
