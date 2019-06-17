@@ -1,4 +1,4 @@
-module Two_Asset
+module TwoAssetsContinuousTime
 
     using ProgressMeter
     using JSON
