@@ -55,10 +55,11 @@ module TwoAssetsContinuousTime
         return nothing
     end
 
-    function hjb(; maxIter::Integer = 30)
+    function solution(; doParallel::Bool = false, maxIter::Integer = 30)
         p   = Param()
-        hh  = Household(p)
+        hh  = Household(p, doParallel)
         hjb!(p,hh,maxIter)
+        kde!(p, hh)
         return p,hh
     end
 
