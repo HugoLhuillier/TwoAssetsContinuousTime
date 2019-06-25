@@ -1,28 +1,35 @@
-mutable struct Param
-    ρ       ::Float64
-    σ       ::Float64
-    Δ       ::Float64
-    χ0      ::Float64
-    χ1      ::Float64
-    ξ       ::Float64
-    ε       ::Float64
+# redfine the Param struct so that can infer the values from the
+# general object
+# e.g.
+# mutable struct MyType{T<:AbstractFloat}
+#    a::T
+# end
 
-    rb      ::Float64
-    κ       ::Float64
-    τ       ::Float64
-    ra      ::Float64
-    w       ::Float64
+mutable struct Param{T <: Float64}
+    ρ       ::T
+    σ       ::T
+    Δ       ::T
+    χ0      ::T
+    χ1      ::T
+    ξ       ::T
+    ε       ::T
 
-    gA      ::Array{Float64}
-    gB      ::Array{Float64}
-    gZ      ::Array{Float64}
-    da      ::Float64
-    db      ::Float64
-    dz      ::Float64
+    rb      ::T
+    κ       ::T
+    τ       ::T
+    ra      ::T
+    w       ::T
+
+    gA      ::Array{T}
+    gB      ::Array{T}
+    gZ      ::Array{T}
+    da      ::T
+    db      ::T
+    dz      ::T
     nI      ::Int
     nJ      ::Int
     nK      ::Int
-    λ       ::Array{Float64}
+    λ       ::Array{T}
 
 
     function Param(; par = Dict())
@@ -31,7 +38,7 @@ mutable struct Param
         j = JSON.parse(f)
         close(f)
 
-        this = new()
+        this = new{Float64}()
         for (k,v) in j
             if ∈(Symbol(k), fieldnames(Param))
                 setfield!(this,Symbol(k),v["value"])
