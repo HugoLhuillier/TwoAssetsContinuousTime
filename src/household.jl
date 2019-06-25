@@ -56,14 +56,12 @@ mutable struct Household{T <: Union{SharedArray{Float64}, Array{Float64}}, U <: 
                 setfield!(this, e, copy(ms))
             end
         end
-        # TODO: so far valid only for 2 state income process
-        this.Λ = spdiagm(0           => [-p.λ[1,2] * ones(p.nI * p.nJ); -p.λ[2,1] * ones(p.nI * p.nJ)],
-                            -p.nI*p.nJ  => p.λ[2,1] * ones(p.nI * p.nJ),
-                            p.nI*p.nJ   => p.λ[1,2] * ones(p.nI * p.nJ))
-
+        Λ = p.λ
         for (k,z) in enumerate(p.gZ)
             this.V[:,:,k] = u(p, (1 - p.ξ) * z * p.w .+ (p.ra * p.gA)' .+ (p.rb + p.κ).* p.gB) ./ p.ρ
+            Λ[k,k]        = -sum(p.λ[k,:]) + p.λ[k,k]
         end
+        this.Λ = kron(Λ, spdiagm(0 => ones(p.nI * p.nJ)))
 
         return this
     end

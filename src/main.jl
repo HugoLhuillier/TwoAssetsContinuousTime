@@ -2,7 +2,7 @@ module TwoAssetsContinuousTime
 
     using JSON
     using SparseArrays, LinearAlgebra, IterativeSolvers, SharedArrays, Arpack
-    # include(joinpath(dirname(@__FILE__),"Markov/src/AR1.jl"))
+    include(joinpath(dirname(@__FILE__),"Markov/src/Markov.jl"))
     include("param.jl")
     include("household.jl")
     include("diff.jl")
@@ -55,8 +55,8 @@ module TwoAssetsContinuousTime
         return nothing
     end
 
-    function solution(; doParallel::Bool = false, maxIter::Integer = 30)
-        p   = Param()
+    function solution(; doParallel::Bool = false, doAR1::Bool = false, maxIter::Integer = 30)
+        p   = Param(doAR1)
         hh  = Household(p, doParallel)
         hjb!(p,hh,maxIter)
         kde!(p, hh)

@@ -34,16 +34,16 @@ function deposit!(p::Param, hh::Household, k::Integer)
     upwind!(hh.dF, hh.dFB[:,:,k], hh.dFF[:,:,k], k)
     # NOTE: have this in their code, but not sure why + not necessary for algo to converge
     # seems to work without it
-    # hh.dB[:,1,k]    = (hh.dBF[:,1,k] .> p.ε) .* hh.dBF[:,1,k]
-    # hh.dB[:,end,k]  = (hh.dBB[:,end,k] .< - p.ε) .* hh.dBB[:,end,k]
-    # hh.dB[1,1,k]    = max(hh.dBB[1,1,k], 0.0)
-    # hh.dF[:,1,k]    = (hh.dFF[:,1,k] .> p.ε) .* hh.dFF[:,1,k]
-    # hh.dF[:,end,k]  = (hh.dFB[:,end,k] .< - p.ε) .* hh.dFB[:,end,k]
+    hh.dB[:,1,k]    = (hh.dBF[:,1,k] .> p.ε) .* hh.dBF[:,1,k]
+    hh.dB[:,end,k]  = (hh.dBB[:,end,k] .< - p.ε) .* hh.dBB[:,end,k]
+    hh.dB[1,1,k]    = max(hh.dBB[1,1,k], 0.0)
+    hh.dF[:,1,k]    = (hh.dFF[:,1,k] .> p.ε) .* hh.dFF[:,1,k]
+    hh.dF[:,end,k]  = (hh.dFB[:,end,k] .< - p.ε) .* hh.dFB[:,end,k]
     hh.sdB[:,:,k]   = sd(p, hh.dB[:,:,k])
     hh.sdF[:,:,k]   = sd(p, hh.dF[:,:,k])
     # NOTE: have this in their code, but not sure why
     # seems to work without it
-    # hh.sdF[end,:,k] = min.(hh.sdF[end,:,k],0.0)
+    hh.sdF[end,:,k] = min.(hh.sdF[end,:,k],0.0)
     upwind!(hh.d, hh.dB[:,:,k], hh.dF[:,:,k], hh.sdB[:,:,k], hh.sdF[:,:,k], k)
     #NOTE: here, if intermediary case, then d = 0
     # ensure that use the backward solution at the upper bound of the grid

@@ -32,7 +32,7 @@ mutable struct Param{T <: Float64}
     λ       ::Array{T}
 
 
-    function Param(; par = Dict())
+    function Param(doAR1::Bool; par = Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         # f = open("./params.json")
         j = JSON.parse(f)
@@ -55,12 +55,16 @@ mutable struct Param{T <: Float64}
         this.gA = range(0.0, stop = j["amax"]["value"], length = this.nJ)
         this.gB = range(j["bmin"]["value"], stop = j["bmax"]["value"], length = this.nI)
         # discretize the wage process with rowenhorst
-        # ω       = - j["σ2"]["value"] * (1 - j["ρ_z"]["value"]) / (2 * (1 - j["ρ_z"]["value"]^2))
-        # prod    = Markov.rowenhorst(ω, j["ρ_z"]["value"], j["σ2"]["value"], j["nK"]["value"])
-        # this.gZ = exp.(prod.grid)
-        # this.λ  = prod.π
-        this.gZ = [.8; 1.3]
-        this.λ  = [-1/3 1/3; 1/3 -1/3]
+        if(doAR1)
+            ω       = - j["σ2"]["value"] * (1 - j["ρ_z"]["value"]) / (2 * (1 - j["ρ_z"]["value"]^2))
+            prod    = Markov.rowenhorst(ω, j["ρ_z"]["value"], j["σ2"]["value"], j["nK"]["value"])
+            this.gZ = exp.(prod.grid)
+            this.λ  = log(prod.π)
+        else
+            if p.nK > 2; @error "nK must be equal to 2. set doAR1 = true to keep nK > 2"; end
+            this.gZ = [.8; 1.3]
+            this.λ  = [-1/3 1/3; 1/3 -1/3]
+        end
         this.da = this.gA[2] - this.gA[1]
         this.db = this.gB[2] - this.gB[1]
         this.dz = this.gZ[2] - this.gZ[1]
