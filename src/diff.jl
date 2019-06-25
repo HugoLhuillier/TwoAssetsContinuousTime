@@ -1,5 +1,5 @@
 function upwind!(O, cB::T, cF::T, dB::T, dF::T, k::Integer) where T <: Array{Float64}
-    O[:,:,k] = cB .* (dB .< 0.0) .+ cF .* (dF .> 0.0)
+    O[:,:,k] = cB .* (dB .< -1e-12) .+ cF .* (dF .> 1e-12)
     return nothing
 end
 function upwind!(O, cB::T, cF::T, k::Integer) where T <: Array{Float64}

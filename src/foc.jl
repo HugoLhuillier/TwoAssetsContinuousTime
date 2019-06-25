@@ -9,13 +9,13 @@ function consumption!(p::Param, hh::Household, k::Integer)
     # difference is needed.
     # for the lower bound = borrowing constraint, the backward finite difference is
     # defined as if the borrowing constraint were binding, e.g. the drift is set to zero
-    hh.cF[:,:,k] = inv_∂u(p, hh.VbF[:,:,k])
-    hh.cB[:,:,k] = inv_∂u(p, hh.VbB[:,:,k])
+    hh.cF[:,:,k] = inv_∂u(p, max.(p.ε, hh.VbF[:,:,k]))
+    hh.cB[:,:,k] = inv_∂u(p, max.(p.ε, hh.VbB[:,:,k]))
     hh.scB[:,:,k] = sc(p, hh.cB[:,:,k], k)
     hh.scF[:,:,k] = sc(p, hh.cF[:,:,k], k)
     upwind!(hh.c, hh.cB[:,:,k], hh.cF[:,:,k], hh.scB[:,:,k], hh.scF[:,:,k], k)
     # TODO: understand better the origin of this... could think of it as "stay put" = zero saving
-    hh.c[:,:,k] = ifelse.(hh.scF[:,:,k] .<= 0.0, ifelse.(hh.scB[:,:,k] .>= 0.0,
+    hh.c[:,:,k] = ifelse.(hh.scB[:,:,k] .>= -p.ε, ifelse.(hh.scF[:,:,k] .<= p.ε,
                         (1 - p.ξ) * p.w * p.gZ[k] .+ rb(p,p.gB) .* p.gB .+ zeros(p.nJ)',
                         hh.c[:,:,k]), hh.c[:,:,k])
     return nothing
