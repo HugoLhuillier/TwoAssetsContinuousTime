@@ -70,7 +70,7 @@
 		"symbol" : "w"
 	},
   "nI" : {
-		"value" : 100,
+		"value" : 80,
 		"description" : "Grid size, liquid asset",
 		"symbol" : "I"
 	},
@@ -80,17 +80,17 @@
 		"symbol" : "I"
 	},
   "nK" : {
-		"value" : 2,
+		"value" : 4,
 		"description" : "Grid size, productivity",
 		"symbol" : "I"
 	},
   "ρ_z" : {
-		"value" : 0.9,
+		"value" : 0.7,
 		"description" : "Persisence, AR1",
 		"symbol" : "\\rho"
 	},
   "σ2" : {
-		"value" : 0.06,
+		"value" : 0.03,
 		"description" : "Volatility, AR1",
 		"symbol" : "\\sigma^2"
 	},

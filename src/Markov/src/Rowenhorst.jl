@@ -3,7 +3,7 @@ rowenhorst algorithm"
 function rowenhorst_estimation!(t)
     # NOTE: treat the process as if had mean zero and add at the end the mean
     # this way, the moment equations are simpler to solve
-    # ψ defines the state space. (p,q) defines the transition matrix# 
+    # ψ defines the state space. (p,q) defines the transition matrix#
     p = (1 + t.ρ) / 2
     q = p
     N = length(t.grid)

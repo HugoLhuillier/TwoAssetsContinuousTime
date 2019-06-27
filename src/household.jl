@@ -42,14 +42,13 @@ mutable struct Household{T <: Union{SharedArray{Float64}, Array{Float64}}, U <: 
         ms       = spzeros(p.nI * p.nJ * p.nK, p.nI * p.nJ * p.nK)
         if doParallel
             this = new{SharedArray{Float64}, SparseMatrixCSC{Float64, Int64}}()
-            m    = SharedArray{Float64,3}((p.nI, p.nJ, p.nK))
         else
             this = new{Array{Float64}, SparseMatrixCSC{Float64, Int64}}()
             m    = zeros(p.nI, p.nJ, p.nK)
         end
         for e in fieldnames(Household)
             if !∈(e, [:Λ; :B; :D; :A; :Vupdtvec])
-                setfield!(this, e, copy(m))
+                setfield!(this, e, doParallel ? SharedArray{Float64,3}((p.nI, p.nJ, p.nK)) : copy(m))
             elseif e == :Vupdtvec
                 this.Vupdtvec = zeros(p.nI * p.nJ * p.nK)
             else
