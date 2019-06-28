@@ -54,7 +54,7 @@ mutable struct Param
             this.gZ = exp.(prod.grid)
             this.λ  = log(prod.π)
         else
-            if p.nK > 2; @error "nK must be equal to 2. set doAR1 = true to keep nK > 2"; end
+            if this.nK > 2; @error "nK must be equal to 2. set doAR1 = true to keep nK > 2"; end
             this.gZ = [.8; 1.3]
             this.λ  = [-1/3 1/3; 1/3 -1/3]
         end
