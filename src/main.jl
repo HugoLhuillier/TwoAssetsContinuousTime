@@ -1,8 +1,8 @@
 module TwoAssetsContinuousTime
 
     using JSON
-    using SparseArrays, LinearAlgebra, IterativeSolvers, SharedArrays, Arpack
-    using Distributed
+    using SparseArrays, LinearAlgebra, SharedArrays
+    using Pardiso
     include(joinpath(dirname(@__FILE__),"Markov/src/Markov.jl"))
     include("param.jl")
     include("household.jl")
@@ -47,12 +47,13 @@ module TwoAssetsContinuousTime
             D2!(p,hh,k)
         end
         TwoAssetsContinuousTime.A!(p,hh)
-        # NOTE: compared to ben's code, take the eigenvector associated to
-        # the largest eigenvalue (= zero)
-        val, vec = Arpack.eigs(hh.A', which = :LR, nev = 1)
-        vec     = Real.(vec)
-        vec     ./= sum(vec)
-        hh.μ    = reshape(vec, (p.nI, p.nJ, p.nK))
+        # @time val, vec = Arpack.eigs(hh.A', which = :LR, nev = 1)
+        hh.A      = hh.A'
+        hh.A[1,:] = [1; zeros(size(hh.A)[1] - 1)]
+        Pardiso.solve!(p.ps, hh.μvec, SparseMatrixCSC(hh.A), [.01;hh.μvec[2:end]])
+        # vec     = Real.(vec)
+        hh.μvec ./= sum(hh.μvec)
+        hh.μ    = reshape(hh.μvec, (p.nI, p.nJ, p.nK))
         return nothing
     end
 

@@ -24,6 +24,7 @@ mutable struct Param{T <: Float64}
     nK      ::Int
     λ       ::Array{T}
 
+    ps      ::MKLPardisoSolver
 
     function Param(doAR1::Bool; par = Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -63,6 +64,8 @@ mutable struct Param{T <: Float64}
         this.dz = this.gZ[2] - this.gZ[1]
 
         if this.ra >= 1 / this.χ1; error("ra >= 1 / χ1: ∞ accumulation of illiquid wealth"); end
+
+        this.ps = Pardiso.MKLPardisoSolver()
 
         return this
     end

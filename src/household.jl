@@ -7,6 +7,7 @@ mutable struct Household{T <: Union{SharedArray{Float64}, Array{Float64}}, U <: 
     adot    ::T
     bdot    ::T
     μ       ::T
+    μvec    ::T
 
     VaB     ::T
     VaF     ::T
@@ -46,11 +47,11 @@ mutable struct Household{T <: Union{SharedArray{Float64}, Array{Float64}}, U <: 
             m    = zeros(p.nI, p.nJ, p.nK)
         end
         for e in fieldnames(Household)
-            if !∈(e, [:Λ; :B; :D; :A; :Vupdtvec])
+            if !∈(e, [:Λ; :B; :D; :A; :Vupdtvec; :μvec])
                 setfield!(this, e, doParallel ? SharedArray{Float64,3}((p.nI, p.nJ, p.nK)) : copy(m))
-            elseif e == :Vupdtvec
-                this.Vupdtvec = zeros(p.nI * p.nJ * p.nK)
-            else
+            elseif ∈(e, [:Vupdtvec; :μvec])
+                setfield!(this, e, zeros(p.nI * p.nJ * p.nK))
+            elseif ∈(e, [:Λ; :B; :D; :A])
                 setfield!(this, e, copy(ms))
             end
         end
