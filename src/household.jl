@@ -1,5 +1,4 @@
 mutable struct Household{T <: Union{SharedArray{Float64}, Array{Float64}}, U <: SparseMatrixCSC{Float64, Int64}}
-
     V       ::T
     Vupdt   ::T
     Vupdtvec::T

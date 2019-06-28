@@ -1,10 +1,3 @@
-# redfine the Param struct so that can infer the values from the
-# general object
-# e.g.
-# mutable struct MyType{T<:AbstractFloat}
-#    a::T
-# end
-
 mutable struct Param{T <: Float64}
     ρ       ::T
     σ       ::T
