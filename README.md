@@ -15,6 +15,10 @@ TwoAssetsContinuousTime.kde!(p, hh)     # solves for the stationary distribution
 
 to change the calibration, modify the ``src/params.json`` file.
 
+__dependencies__
+
+this branch uses [pardiso.jl](https://github.com/JuliaSparse/Pardiso.jl), which requires you to have the mkl library installed. while the installation can be a bit cumbersome, this allows us to use parallel computing to solve the hjb and kfe.
+
 ### results
 
 the stationary distribution over illiquid and liquid wealth for the high income households looks like
