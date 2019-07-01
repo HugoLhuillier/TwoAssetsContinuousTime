@@ -23,6 +23,7 @@ mutable struct Param{T <: Float64}
     nJ      ::Int
     nK      ::Int
     λ       ::Array{T}
+    Δmat    ::SparseMatrixCSC{T, Int64}
 
     ps      ::MKLPardisoSolver
 
@@ -66,6 +67,7 @@ mutable struct Param{T <: Float64}
         if this.ra >= 1 / this.χ1; error("ra >= 1 / χ1: ∞ accumulation of illiquid wealth"); end
 
         this.ps = Pardiso.MKLPardisoSolver()
+        this.Δmat = (1 / this.Δ + this.ρ) .* spdiagm(0 => ones(this.nI*this.nJ*this.nK))
 
         return this
     end
