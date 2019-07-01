@@ -2,6 +2,7 @@ module TwoAssetsContinuousTime
 
     using JSON
     using SparseArrays, LinearAlgebra, IterativeSolvers, SharedArrays, Arpack
+    using DataStructures
     include(joinpath(dirname(@__FILE__),"Markov/src/Markov.jl"))
     include("param.jl")
     include("household.jl")

@@ -67,3 +67,34 @@ mutable struct Param
         return this
     end
 end
+
+function Base.show(io::IO, p::Param)
+    println("parameter values")
+    println("-----------------------")
+    for (k,v) in OrderedDict(:ρ => "discount factor",
+                  :σ     => "risk aversion",
+                  :χ0    => "cost function, χ0",
+                  :χ1    => "cost function, χ1",
+                  :ξ     => "% invested in illiquid asset",
+                  :ε     => "tolerance")
+        println("$v: $(getfield(p,k))")
+    end
+    println("-----------------------")
+    println("prices")
+    println("-----------------------")
+    for (k,v) in OrderedDict(:rb => "liquid interest rate",
+                  :κ      => "liquid borrowing rate (net)",
+                  :ra     => "illiquid interest rate",
+                  :w      => "wage rate",
+                  :τ      => "tax on liquid rate")
+        println("$v: $(getfield(p,k))")
+    end
+    println("-----------------------")
+    println("grids")
+    println("-----------------------")
+    println("illquid asset: [$(minimum(p.gB)), $(maximum(p.gB))] (# $(p.nI))")
+    println("liquid asset: [$(minimum(p.gA)), $(maximum(p.gA))] (# $(p.nJ))")
+    println("productivity levels: $(p.gZ) (# $(p.nK))")
+    println("-----------------------")
+    return nothing
+end

@@ -34,23 +34,28 @@ mutable struct Household
     D       ::SparseMatrixCSC{Float64, Int64}
     A       ::SparseMatrixCSC{Float64, Int64}
 
+    hasConv ::Bool
+
     function Household(p::Param)
         # state space:
         # first dimension is liquid asset
         # second dimension is illiquid asset
         # third dimension is productivity
         this = new()
+        this.hasConv = false
 
         # m           = SharedArray{Float64,3}((p.nI, p.nJ, p.nK))
         m           = zeros(p.nI, p.nJ, p.nK)
         ms          = spzeros(p.nI * p.nJ * p.nK, p.nI * p.nJ * p.nK)
         for e in fieldnames(Household)
-            if !∈(e, [:Λ; :B; :D; :A; :Vupdtvec])
-                setfield!(this, e, copy(m))
-            elseif e == :Vupdtvec
-                this.Vupdtvec = zeros(p.nI * p.nJ * p.nK)
-            else
-                setfield!(this, e, copy(ms))
+            if e !== :hasConv
+                if !∈(e, [:Λ; :B; :D; :A; :Vupdtvec])
+                    setfield!(this, e, copy(m))
+                elseif e == :Vupdtvec
+                    this.Vupdtvec = zeros(p.nI * p.nJ * p.nK)
+                else
+                    setfield!(this, e, copy(ms))
+                end
             end
         end
         Λ = p.λ
@@ -62,6 +67,13 @@ mutable struct Household
 
         return this
     end
+end
+
+function Base.show(io::IO, hh::Household)
+    nI, nJ, nK = size(hh.V)[1], size(hh.V)[2], size(hh.V)[3]
+    println("household type with ($nI, $nJ, $nK) grid points.")
+    print("optimal policy functions? $(hh.hasConv)")
+    return nothing
 end
 
 u(p::Param, c)     = c.^(1 - p.σ) ./ (1 - p.σ)
