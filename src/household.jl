@@ -1,61 +1,58 @@
-mutable struct Household
+mutable struct Household{T <: Union{SharedArray{Float64}, Array{Float64}}, U <: SparseMatrixCSC{Float64, Int64}}
+    V       ::T
+    Vupdt   ::T
+    Vupdtvec::T
+    c       ::T
+    d       ::T
+    adot    ::T
+    bdot    ::T
+    μ       ::T
+    μvec    ::T
 
-    V       ::Union{SharedArray{Float64}, Array{Float64}}
-    Vupdt   ::Array{Float64}
-    Vupdtvec::Array{Float64}
-    c       ::Union{SharedArray{Float64}, Array{Float64}}
-    d       ::Union{SharedArray{Float64}, Array{Float64}}
-    adot    ::Array{Float64}
-    bdot    ::Array{Float64}
-    μ       ::Array{Float64}
+    VaB     ::T
+    VaF     ::T
+    VbB     ::T
+    VbF     ::T
+    cB      ::T
+    cF      ::T
+    dBB     ::T
+    dBF     ::T
+    dFB     ::T
+    dFF     ::T
+    dB      ::T
+    dF      ::T
+    scB     ::T
+    scF     ::T
+    sdB     ::T
+    sdF     ::T
 
-    VaB     ::Union{SharedArray{Float64}, Array{Float64}}
-    VaF     ::Union{SharedArray{Float64}, Array{Float64}}
-    VbB     ::Union{SharedArray{Float64}, Array{Float64}}
-    VbF     ::Union{SharedArray{Float64}, Array{Float64}}
-    cB      ::Union{SharedArray{Float64}, Array{Float64}}
-    cF      ::Union{SharedArray{Float64}, Array{Float64}}
-    dBB     ::Union{SharedArray{Float64}, Array{Float64}}
-    dBF     ::Union{SharedArray{Float64}, Array{Float64}}
-    dFB     ::Union{SharedArray{Float64}, Array{Float64}}
-    dFF     ::Union{SharedArray{Float64}, Array{Float64}}
-    dB      ::Union{SharedArray{Float64}, Array{Float64}}
-    dF      ::Union{SharedArray{Float64}, Array{Float64}}
-    scB     ::Union{SharedArray{Float64}, Array{Float64}}
-    scF     ::Union{SharedArray{Float64}, Array{Float64}}
-    sdB     ::Union{SharedArray{Float64}, Array{Float64}}
-    sdF     ::Union{SharedArray{Float64}, Array{Float64}}
+    X       ::T
+    Y       ::T
+    Z       ::T
+    Λ       ::U
+    B       ::U
+    D       ::U
+    A       ::U
 
-    X       ::Union{SharedArray{Float64}, Array{Float64}}
-    Y       ::Union{SharedArray{Float64}, Array{Float64}}
-    Z       ::Union{SharedArray{Float64}, Array{Float64}}
-    Λ       ::SparseMatrixCSC{Float64, Int64}
-    B       ::SparseMatrixCSC{Float64, Int64}
-    D       ::SparseMatrixCSC{Float64, Int64}
-    A       ::SparseMatrixCSC{Float64, Int64}
-
-    hasConv ::Bool
-
-    function Household(p::Param)
+    function Household(p::Param, doParallel::Bool)
         # state space:
         # first dimension is liquid asset
         # second dimension is illiquid asset
         # third dimension is productivity
-        this = new()
-        this.hasConv = false
-
-        # m           = SharedArray{Float64,3}((p.nI, p.nJ, p.nK))
-        m           = zeros(p.nI, p.nJ, p.nK)
-        ms          = spzeros(p.nI * p.nJ * p.nK, p.nI * p.nJ * p.nK)
+        ms       = spzeros(p.nI * p.nJ * p.nK, p.nI * p.nJ * p.nK)
+        if doParallel
+            this = new{SharedArray{Float64}, SparseMatrixCSC{Float64, Int64}}()
+        else
+            this = new{Array{Float64}, SparseMatrixCSC{Float64, Int64}}()
+            m    = zeros(p.nI, p.nJ, p.nK)
+        end
         for e in fieldnames(Household)
-            if e !== :hasConv
-                if !∈(e, [:Λ; :B; :D; :A; :Vupdtvec])
-                    setfield!(this, e, copy(m))
-                elseif e == :Vupdtvec
-                    this.Vupdtvec = zeros(p.nI * p.nJ * p.nK)
-                else
-                    setfield!(this, e, copy(ms))
-                end
+            if !∈(e, [:Λ; :B; :D; :A; :Vupdtvec; :μvec])
+                setfield!(this, e, doParallel ? SharedArray{Float64,3}((p.nI, p.nJ, p.nK)) : copy(m))
+            elseif ∈(e, [:Vupdtvec; :μvec])
+                setfield!(this, e, zeros(p.nI * p.nJ * p.nK))
+            elseif ∈(e, [:Λ; :B; :D; :A])
+                setfield!(this, e, copy(ms))
             end
         end
         Λ = p.λ

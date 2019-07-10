@@ -69,7 +69,7 @@ end
 
 function solve_hjb!(p::Param, hh::Household)
     hh.Vupdtvec[:]  = vcat(hh.V...)
-    idrs!(hh.Vupdtvec, (1 / p.Δ + p.ρ) .* spdiagm(0 => ones(p.nI*p.nJ*p.nK)) - hh.A, vcat(u(p, hh.c) .+ hh.V./ p.Δ...))
+    Pardiso.solve!(p.ps, hh.Vupdtvec, p.Δmat - hh.A, vcat(u(p, hh.c) .+ hh.V./ p.Δ...))
     hh.Vupdt[:]     = reshape(hh.Vupdtvec, p.nI, p.nJ, p.nK)
     return nothing
 end

@@ -1,29 +1,31 @@
-mutable struct Param
-    ρ       ::Float64
-    σ       ::Float64
-    Δ       ::Float64
-    χ0      ::Float64
-    χ1      ::Float64
-    ξ       ::Float64
-    ε       ::Float64
+mutable struct Param{T <: Float64}
+    ρ       ::T
+    σ       ::T
+    Δ       ::T
+    χ0      ::T
+    χ1      ::T
+    ξ       ::T
+    ε       ::T
 
-    rb      ::Float64
-    κ       ::Float64
-    τ       ::Float64
-    ra      ::Float64
-    w       ::Float64
+    rb      ::T
+    κ       ::T
+    τ       ::T
+    ra      ::T
+    w       ::T
 
-    gA      ::Array{Float64}
-    gB      ::Array{Float64}
-    gZ      ::Array{Float64}
-    da      ::Float64
-    db      ::Float64
-    dz      ::Float64
+    gA      ::Array{T}
+    gB      ::Array{T}
+    gZ      ::Array{T}
+    da      ::T
+    db      ::T
+    dz      ::T
     nI      ::Int
     nJ      ::Int
     nK      ::Int
-    λ       ::Array{Float64}
+    λ       ::Array{T}
+    Δmat    ::SparseMatrixCSC{T, Int64}
 
+    ps      ::MKLPardisoSolver
 
     function Param(doAR1::Bool; par = Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -31,7 +33,7 @@ mutable struct Param
         j = JSON.parse(f)
         close(f)
 
-        this = new()
+        this = new{Float64}()
         for (k,v) in j
             if ∈(Symbol(k), fieldnames(Param))
                 setfield!(this,Symbol(k),v["value"])
@@ -63,6 +65,9 @@ mutable struct Param
         this.dz = this.gZ[2] - this.gZ[1]
 
         if this.ra >= 1 / this.χ1; error("ra >= 1 / χ1: ∞ accumulation of illiquid wealth"); end
+
+        this.ps = Pardiso.MKLPardisoSolver()
+        this.Δmat = (1 / this.Δ + this.ρ) .* spdiagm(0 => ones(this.nI*this.nJ*this.nK))
 
         return this
     end
