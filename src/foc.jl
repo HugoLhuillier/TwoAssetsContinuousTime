@@ -26,10 +26,6 @@ function deposit!(p::Param, hh::Household, k::Integer)
     hh.dBF[:,:,k]   = deposit(p, hh.VaF[:,:,k], hh.VbB[:,:,k])
     hh.dBB[:,:,k]   = deposit(p, hh.VaB[:,:,k], hh.VbB[:,:,k])
     hh.dFB[:,:,k]   = deposit(p, hh.VaB[:,:,k], hh.VbF[:,:,k])
-    if any(hh.dBF[:,1,k] .< 0.); @warn "negative deposite rate (bf) at amin for k = $k"; end
-    if any(hh.dBB[:,end,k] .> 0.); @warn "positive deposite rate (bb) at amax for k = $k"; end
-    if any(hh.dFF[:,1,k] .< 0.); @warn "negative deposite rate (bf) at amin for k = $k"; end
-    if any(hh.dFB[:,end,k] .> 0.); @warn "positive deposite rate (bb) at amax for k = $k"; end
     upwind!(hh.dB, hh.dBB[:,:,k], hh.dBF[:,:,k], k)
     upwind!(hh.dF, hh.dFB[:,:,k], hh.dFF[:,:,k], k)
     # NOTE: have this in their code, but not sure why + not necessary for algo to converge
@@ -49,6 +45,13 @@ function deposit!(p::Param, hh::Household, k::Integer)
     # ensure that use the backward solution at the upper bound of the grid
     hh.d[end,:,k]   = hh.dB[end,:,k]
     return nothing
+end
+
+function check(hh::Household)
+    if any(hh.dBF[:,1,:] .< 0.); @warn "negative deposite rate (bf) at amin"; end
+    if any(hh.dBB[:,end,:] .> 0.); @warn "positive deposite rate (bb) at amax"; end
+    if any(hh.dFF[:,1,:] .< 0.); @warn "negative deposite rate (bf) at amin"; end
+    if any(hh.dFB[:,end,:] .> 0.); @warn "positive deposite rate (bb) at amax"; end
 end
 
 function loms!(p::Param, hh::Household)

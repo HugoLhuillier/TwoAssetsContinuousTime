@@ -21,6 +21,7 @@ module TwoAssetsContinuousTime
                 B!(p,hh,k)
                 D!(p,hh,k)
             end
+            check(hh)
             A!(p,hh)
             # transition matrix should sum up to zero
             s       = maximum(abs.(sum(hh.A, dims = 2)))
