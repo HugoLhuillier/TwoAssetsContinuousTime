@@ -1,3 +1,5 @@
+using Plots; pyplot(border = :box)
+
 function reproduce_plots(p::Param, hh::Household)
     for k in eachindex(p.gZ)
         for (o,t) in Dict([:c       => ("Consumption", (240,13)),

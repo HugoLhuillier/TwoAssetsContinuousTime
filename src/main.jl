@@ -3,6 +3,7 @@ module TwoAssetsContinuousTime
     using JSON
     using SparseArrays, LinearAlgebra, SharedArrays
     using Pardiso
+    using DataStructures
     include(joinpath(dirname(@__FILE__),"Markov/src/Markov.jl"))
     include("param.jl")
     include("household.jl")
