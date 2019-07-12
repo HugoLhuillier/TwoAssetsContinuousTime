@@ -1,4 +1,6 @@
-function reproduce_plots(p::Param, hh::Household)
+using Plots; pyplot(box = :border)
+
+function reproduce_plots(p::TwoAssetsContinuousTime.Param, hh::TwoAssetsContinuousTime.Household)
     for k in eachindex(p.gZ)
         for (o,t) in Dict([:c       => ("Consumption", (240,13)),
                             :d      => ("Deposit", (250,13)),
@@ -13,7 +15,7 @@ function reproduce_plots(p::Param, hh::Household)
             plot!(xlab = "Illiquid wealth", ylab = "Liquid wealth", title = t[1],
                 c = :matter, colorbar = false, camera = t[2])
             # plots!(camera = t[2])
-            savefig(joinpath(dirname(@__FILE__),"/figs/$(o)_$k"))
+            savefig(joinpath(dirname(@__FILE__),"../figs/newtest/$(o)_$k"))
         end
     end
     return nothing

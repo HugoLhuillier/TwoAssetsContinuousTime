@@ -8,20 +8,27 @@ mutable struct Param{T <: Float64}
     ε       ::T
 
     rb      ::T
+    gRb     ::Array{T}
     κ       ::T
     τ       ::T
     ra      ::T
+    gRa     ::Array{T}
     w       ::T
 
     gA      ::Array{T}
+    gArA    ::Array{T}
     gB      ::Array{T}
+    gBrB    ::Array{T}
     gZ      ::Array{T}
+    gInc    ::Array{T}
+    gIncA   ::Array{T}
     da      ::T
     db      ::T
     dz      ::T
     nI      ::Int
     nJ      ::Int
     nK      ::Int
+    lindex  ::LinearIndices
     λ       ::Array{T}
     Δmat    ::SparseMatrixCSC{T, Int64}
 
@@ -47,8 +54,12 @@ mutable struct Param{T <: Float64}
         end
 
         # NOTE: equidistant grid points
-        this.gA = range(0.0, stop = j["amax"]["value"], length = this.nJ)
-        this.gB = range(j["bmin"]["value"], stop = j["bmax"]["value"], length = this.nI)
+        this.gA     = range(0.0, stop = j["amax"]["value"], length = this.nJ)
+        this.gRa    = ra(this, this.gA)
+        this.gArA   = this.gA .* this.gRa
+        this.gB     = range(j["bmin"]["value"], stop = j["bmax"]["value"], length = this.nI)
+        this.gRb    = rb(this, this.gB)
+        this.gBrB   = this.gB .* this.gRb
         # discretize the wage process with rowenhorst
         if(doAR1)
             ω       = - j["σ2"]["value"] * (1 - j["ρ_z"]["value"]) / (2 * (1 - j["ρ_z"]["value"]^2))
@@ -60,9 +71,12 @@ mutable struct Param{T <: Float64}
             this.gZ = [.8; 1.3]
             this.λ  = [-1/3 1/3; 1/3 -1/3]
         end
+        this.gInc  = (1 - this.ξ) * this.w .* this.gZ
+        this.gIncA = this.ξ * this.w .* this.gZ
         this.da = this.gA[2] - this.gA[1]
         this.db = this.gB[2] - this.gB[1]
         this.dz = this.gZ[2] - this.gZ[1]
+        this.lindex = LinearIndices((zeros(this.nI, this.nJ, this.nK)))
 
         if this.ra >= 1 / this.χ1; error("ra >= 1 / χ1: ∞ accumulation of illiquid wealth"); end
 

@@ -69,10 +69,9 @@ end
 function Base.show(io::IO, hh::Household)
     nI, nJ, nK = size(hh.V)[1], size(hh.V)[2], size(hh.V)[3]
     println("household type with ($nI, $nJ, $nK) grid points.")
-    print("optimal policy functions? $(hh.hasConv)")
     return nothing
 end
 
-u(p::Param, c)     = c.^(1 - p.σ) ./ (1 - p.σ)
-∂u(p::Param, c)    = c.^(-p.σ)
-inv_∂u(p::Param, x) = (x).^(-1 / p.σ)
+u(p::Param, c)               = c.^(1 - p.σ) / (1 - p.σ)
+∂u(p::Param, c::Float64)     = c^(-p.σ)
+inv_∂u(p::Param, c::Float64) = (c)^(-1 / p.σ)

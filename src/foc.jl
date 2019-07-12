@@ -1,62 +1,64 @@
-deposit(p::Param, Va, Vb)   = (min.(0., Va ./ Vb .- 1 .+ p.χ0) + max.(0., Va ./ Vb .- 1 .- p.χ0)) .* p.gA' ./ p.χ1
-sc(p::Param, c, k::Integer) = (1 - p.ξ) * p.w * p.gZ[k] .+ rb(p,p.gB) .* p.gB .- c
-sd(p::Param, d)             = -d .-  χ(p, d, reshape(repeat(p.gA, inner = p.nI), p.nI, p.nJ))
-
-function consumption!(p::Param, hh::Household, k::Integer)
-    # boundary conditions
-    # for the upper bound, this should not be a problem. if the upper bound is large enough,
-    # households will decumulate for large a/b and therefore only the backward finite
-    # difference is needed.
-    # for the lower bound = borrowing constraint, the backward finite difference is
-    # defined as if the borrowing constraint were binding, e.g. the drift is set to zero
-    hh.cF[:,:,k] = inv_∂u(p, max.(p.ε, hh.VbF[:,:,k]))
-    hh.cB[:,:,k] = inv_∂u(p, max.(p.ε, hh.VbB[:,:,k]))
-    hh.scB[:,:,k] = sc(p, hh.cB[:,:,k], k)
-    hh.scF[:,:,k] = sc(p, hh.cF[:,:,k], k)
-    upwind!(hh.c, hh.cB[:,:,k], hh.cF[:,:,k], hh.scB[:,:,k], hh.scF[:,:,k], k)
+function consumption!(p::Param, hh::Household, ind::Tuple{Int64,Int64,Int64})
+    hh.cF[ind...]  = inv_∂u(p, max(p.ε, hh.VbF[ind...]))
+    hh.cB[ind...]  = inv_∂u(p, max(p.ε, hh.VbB[ind...]))
+    hh.scB[ind...] = p.gInc[ind[3]] + p.gBrB[ind[1]] - hh.cB[ind...]
+    hh.scF[ind...] = p.gInc[ind[3]] + p.gBrB[ind[1]] - hh.cF[ind...]
+    upwind!(hh.c, hh.cB[ind...], hh.cF[ind...], hh.scB[ind...], hh.scF[ind...], ind)
     # TODO: understand better the origin of this... could think of it as "stay put" = zero saving
-    hh.c[:,:,k] = ifelse.(hh.scB[:,:,k] .>= -p.ε, ifelse.(hh.scF[:,:,k] .<= p.ε,
-                        (1 - p.ξ) * p.w * p.gZ[k] .+ rb(p,p.gB) .* p.gB .+ zeros(p.nJ)',
-                        hh.c[:,:,k]), hh.c[:,:,k])
+    if hh.scB[ind...] >= -p.ε && hh.scF[ind...] <= p.ε
+        hh.c[ind...] = p.gInc[ind[3]] + p.gBrB[ind[1]]
+    end
     return nothing
 end
 
-function deposit!(p::Param, hh::Household, k::Integer)
-    hh.dFF[:,:,k]   = deposit(p, hh.VaF[:,:,k], hh.VbF[:,:,k])
-    hh.dBF[:,:,k]   = deposit(p, hh.VaF[:,:,k], hh.VbB[:,:,k])
-    hh.dBB[:,:,k]   = deposit(p, hh.VaB[:,:,k], hh.VbB[:,:,k])
-    hh.dFB[:,:,k]   = deposit(p, hh.VaB[:,:,k], hh.VbF[:,:,k])
-    if any(hh.dBF[:,1,k] .< 0.); @warn "negative deposite rate (bf) at amin for k = $k"; end
-    if any(hh.dBB[:,end,k] .> 0.); @warn "positive deposite rate (bb) at amax for k = $k"; end
-    if any(hh.dFF[:,1,k] .< 0.); @warn "negative deposite rate (bf) at amin for k = $k"; end
-    if any(hh.dFB[:,end,k] .> 0.); @warn "positive deposite rate (bb) at amax for k = $k"; end
-    upwind!(hh.dB, hh.dBB[:,:,k], hh.dBF[:,:,k], k)
-    upwind!(hh.dF, hh.dFB[:,:,k], hh.dFF[:,:,k], k)
-    # NOTE: have this in their code, but not sure why + not necessary for algo to converge
-    # seems to work without it
-    hh.dB[:,1,k]    = (hh.dBF[:,1,k] .> p.ε) .* hh.dBF[:,1,k]
-    hh.dB[:,end,k]  = (hh.dBB[:,end,k] .< - p.ε) .* hh.dBB[:,end,k]
-    hh.dB[1,1,k]    = max(hh.dBB[1,1,k], 0.0)
-    hh.dF[:,1,k]    = (hh.dFF[:,1,k] .> p.ε) .* hh.dFF[:,1,k]
-    hh.dF[:,end,k]  = (hh.dFB[:,end,k] .< - p.ε) .* hh.dFB[:,end,k]
-    hh.sdB[:,:,k]   = sd(p, hh.dB[:,:,k])
-    hh.sdF[:,:,k]   = sd(p, hh.dF[:,:,k])
-    # NOTE: have this in their code, but not sure why
-    # seems to work without it
-    hh.sdF[end,:,k] = min.(hh.sdF[end,:,k],0.0)
-    upwind!(hh.d, hh.dB[:,:,k], hh.dF[:,:,k], hh.sdB[:,:,k], hh.sdF[:,:,k], k)
-    #NOTE: here, if intermediary case, then d = 0
-    # ensure that use the backward solution at the upper bound of the grid
-    hh.d[end,:,k]   = hh.dB[end,:,k]
+function deposit!(p::Param, hh::Household, ind::Tuple{Int64,Int64,Int64})
+    VaF, VaB, VbF, VbB = hh.VaF[ind...], hh.VaB[ind...], hh.VbF[ind...], hh.VbB[ind...]
+    hh.dFF[ind...]   = (min(0.,VaF/VbF - 1 + p.χ0) + max(0.,VaF/VbF - 1 - p.χ0)) * p.gA[ind[2]]/p.χ1
+    hh.dBF[ind...]   = (min(0.,VaF/VbB - 1 + p.χ0) + max(0.,VaF/VbB - 1 - p.χ0)) * p.gA[ind[2]]/p.χ1
+    hh.dBB[ind...]   = (min(0.,VaB/VbB - 1 + p.χ0) + max(0.,VaB/VbB - 1 - p.χ0)) * p.gA[ind[2]]/p.χ1
+    hh.dFB[ind...]   = (min(0.,VaB/VbF - 1 + p.χ0) + max(0.,VaB/VbF - 1 - p.χ0)) * p.gA[ind[2]]/p.χ1
+    upwind!(hh.dB, hh.dBB[ind...], hh.dBF[ind...], ind)
+    upwind!(hh.dF, hh.dFB[ind...], hh.dFF[ind...], ind)
+    # boundary conditions
+    if ind[2] == 1
+        # NOTE: have this in their code, but not sure why + not necessary for algo to converge
+        # seems to work without it
+        hh.dB[ind...]    = (hh.dBF[ind...] > p.ε) * hh.dBF[ind...]
+        if ind[1] == 1; hh.dB[ind...]  = max(hh.dBB[ind...], 0.0); end
+        hh.dF[ind...]    = (hh.dFF[ind...] > p.ε) * hh.dFF[ind...]
+    elseif ind[2] == p.nJ
+        hh.dB[ind...]    = (hh.dBB[ind...] < - p.ε) * hh.dBB[ind...]
+        hh.dF[ind...]    = (hh.dFB[ind...] < - p.ε) * hh.dFB[ind...]
+    end
+    hh.sdB[ind...]   = - hh.dB[ind...] - χ(p, hh.dB[ind...], p.gA[ind[2]])
+    hh.sdF[ind...]   = - hh.dF[ind...] - χ(p, hh.dF[ind...], p.gA[ind[2]])
+    # boundary conditions
+    if ind[1] == p.nI
+        # NOTE: have this in their code, but not sure why
+        # seems to work without it
+        hh.sdF[ind...] = min(hh.sdF[ind...],0.0)
+    end
+    upwind!(hh.d, hh.dB[ind...], hh.dF[ind...], hh.sdB[ind...], hh.sdF[ind...], ind)
+    # boudary condition
+    if ind[1] == p.nI
+        # ensure that use the backward solution at the upper bound of the grid
+        hh.d[ind...]   = hh.dB[ind...]
+    end
     return nothing
+end
+
+function check(hh::Household)
+    if any(hh.dBF[:,1,:] .< 0.); @warn "negative deposite rate (bf) at amin"; end
+    if any(hh.dBB[:,end,:] .> 0.); @warn "positive deposite rate (bb) at amax"; end
+    if any(hh.dFF[:,1,:] .< 0.); @warn "negative deposite rate (bf) at amin"; end
+    if any(hh.dFB[:,end,:] .> 0.); @warn "positive deposite rate (bb) at amax"; end
 end
 
 function loms!(p::Param, hh::Household)
-    for (k,z) in enumerate(p.gZ)
-        hh.adot[:,:,k] = hh.d[:,:,k] .+ p.ξ * p.w * z .+ (ra(p,p.gA) .* p.gA)'
-        hh.bdot[:,:,k] = (1 - p.ξ) * p.w * z .+ rb(p,p.gB) .* p.gB .- hh.d[:,:,k] .-
-                        χ(p, hh.d[:,:,k], reshape(repeat(p.gA, inner = p.nI), p.nI, p.nJ)) .-
-                        hh.c[:,:,k]
+    @inbounds for bi in eachindex(p.gB), ai in eachindex(p.gA), ki in eachindex(p.gZ)
+        hh.adot[bi,ai,ki] = hh.d[bi,ai,ki] + p.gIncA[ki] + p.gArA[ai]
+        hh.bdot[bi,ai,ki] = p.gInc[ki] + p.gBrB[bi] - hh.d[bi,ai,ki] -
+                            χ(p, hh.d[bi,ai,ki], p.gA[ai]) - hh.c[bi,ai,ki]
     end
     return nothing
 end
