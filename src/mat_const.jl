@@ -66,10 +66,3 @@ function A!(p::Param, hh::Household)
     hh.A = hh.B + hh.D + hh.Λ
     return nothing
 end
-
-function solve_hjb!(p::Param, hh::Household)
-    hh.Vupdtvec[:]  = vcat(hh.V...)
-    Pardiso.solve!(p.ps, hh.Vupdtvec, p.Δmat - hh.A, vcat(u(p, hh.c) .+ hh.V./ p.Δ...))
-    hh.Vupdt[:]     = reshape(hh.Vupdtvec, p.nI, p.nJ, p.nK)
-    return nothing
-end
