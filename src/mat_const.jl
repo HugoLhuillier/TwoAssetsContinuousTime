@@ -4,12 +4,10 @@ function B!(p::Param, hh::Household, k::Integer)
         (max.(hh.scF[:,:,k], 0.0) .+ max.(hh.sdF[:,:,k], 0.0)) ./ p.db
     hh.Z[:,:,k]     = (max.(hh.scF[:,:,k], 0.0) .+ max.(hh.sdF[:,:,k], 0.0)) ./ p.db
     # make sure that we use backward difference at bmax and forward difference at bmin for deposit
-    hh.X[1,:,k]     = - min.(0, hh.scB[1,:,k]) ./ p.db
     hh.Y[1,:,k]     = min.(hh.scB[1,:,k], 0.0) ./ p.db .-
         (max.(hh.scF[1,:,k], 0.0) .+ max.(hh.sdF[1,:,k], 0.0)) ./ p.db
     hh.X[end,:,k]   = - (min.(0, hh.scB) .+ hh.sdB)[end,:,k] ./ p.db
     hh.Y[end,:,k]   = (min.(hh.scB, 0.0) .- max.(hh.scF, 0.0) .+ hh.sdB)[end,:,k] ./ p.db
-    hh.Z[end,:,k]   = max.(hh.scF[end,:,k], 0.0)  ./ p.db
     # put the diagonals together in a tridiagonal matrix
     concB!(p,hh,k)
     return nothing
@@ -38,8 +36,6 @@ function D!(p::Param, hh::Household, k::Integer)
                     (ra(p, p.gA) .* p.gA)' .- p.gZ[k] * p.w * p.ξ) ./ p.da
     hh.Z[:,:,k]     = (max.(hh.d[:,:,k], 0) .+ (ra(p, p.gA) .* p.gA)' .+ p.gZ[k] * p.w * p.ξ) ./ p.da
     # impose negative drift / use of backward finite difference at the upper bound
-    # TODO: understand why...
-    hh.Z[:,end,k]   = zeros(p.nI)
     hh.Y[:,end,k]   = (min.(hh.d[:,end,k],0) .+ ra(p, p.gA[end]) .* p.gA[end] .+ p.gZ[k] * p.w * p.ξ) ./ p.da
     hh.X[:,end,k]   = -(min.(hh.d[:,end,k],0) .+ ra(p, p.gA[end]) .* p.gA[end] .+ p.gZ[k] * p.w * p.ξ) ./ p.da
     # cast together in sparse matrix
